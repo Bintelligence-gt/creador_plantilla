@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plantilla Guias Cargo Expreso !</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            background-image: url('https://via.placeholder.com/1920x1080'); /* Reemplaza con la URL de tu imagen */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        #formulario {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            background: rgba(249, 249, 249, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            width: 80%;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h2>Generador de Archivo CSV 1.1</h2>
+    <form id="formulario">
+        <label>nombre_destinatario: <input type="text" id="nombre"></label>
+        <label>direccion_destinatario: <input type="text" id="direccion"></label>
+        <label>Departamento:
+            <select id="departamento" onchange="actualizarMunicipios()">
+                <option value="">Seleccione un departamento</option>
+                <option>Petén</option>
+                <option>Chiquimula</option>
+            </select>
+        </label>
+        <label>Municipio:
+            <select id="municipio" onchange="actualizarAldeas()">
+                <option value="">Seleccione un municipio</option>
+            </select>
+        </label>
+        <label>Aldea:
+            <select id="aldea" onchange="actualizarPoblado()">
+                <option value="">Seleccione una aldea</option>
+            </select>
+        </label>
+	<label>telefono_destinatario: <input type="text" id="telefono"></label>
+        <label>poblado_destino: <input type="text" id="poblado" readonly></label>
+        
+        <label>servicio: <input type="text" id="servicio"></label>
+        <label>valor_cod: <input type="text" id="valor_cod"></label>
+        <label>cantidad_piezas: <input type="text" id="cantidad_piezas"></label>
+        <label>tipo_pieza: <input type="text" id="tipo_pieza"></label>
+        <label>peso: <input type="text" id="peso"></label>
+        <label>referencia_1: <input type="text" id="referencia_1"></label>
+        <label>referencia_2: <input type="text" id="referencia_2"></label>
+        <button type="button" onclick="agregarFila()">Agregar Fila</button>
+        <button type="button" onclick="generarCSV()">Descargar CSV</button>
+    </form>
+    
+    <table id="tabla">
+        <thead>
+            <tr>
+                <th>Nombre</th><th>Direccion</th><th>Departamento</th><th>Municipio</th><th>Aldea</th><th>Telefono</th><th>Poblado</th><th>Servicio</th>
+                <th>Valor COD</th><th>Cantidad Piezas</th><th>Tipo Pieza</th><th>Peso</th><th>Referencia 1</th><th>Referencia 2</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        let municipios = {
+            "Petén": ["Melchor De Mencos"],
+            "Chiquimula": ["Chiquimula"]
+        };
+
+        let aldeas = {
+            "Melchor De Mencos": ["Melchor De Mencos"],
+            "Chiquimula": ["El Ingeniero"]
+        };
+
+        let catalogoPoblados = {
+            "Petén,Melchor De Mencos,Melchor De Mencos": "GT0844",
+            "Chiquimula,Chiquimula,El Ingeniero": "GT0845"
+        };
+
+        function actualizarMunicipios() {
+            let departamento = document.getElementById("departamento").value;
+            let municipioSelect = document.getElementById("municipio");
+            municipioSelect.innerHTML = '<option value="">Seleccione un municipio</option>';
+            if (municipios[departamento]) {
+                municipios[departamento].forEach(muni => {
+                    let option = new Option(muni, muni);
+                    municipioSelect.add(option);
+                });
+            }
+            actualizarAldeas();
+        }
+
+        function actualizarAldeas() {
+            let municipio = document.getElementById("municipio").value;
+            let aldeaSelect = document.getElementById("aldea");
+            aldeaSelect.innerHTML = '<option value="">Seleccione una aldea</option>';
+            if (aldeas[municipio]) {
+                aldeas[municipio].forEach(aldea => {
+                    let option = new Option(aldea, aldea);
+                    aldeaSelect.add(option);
+                });
+            }
+        }
+
+        function actualizarPoblado() {
+            let departamento = document.getElementById("departamento").value;
+            let municipio = document.getElementById("municipio").value;
+            let aldea = document.getElementById("aldea").value;
+            let clave = `${departamento},${municipio},${aldea}`;
+            document.getElementById("poblado").value = catalogoPoblados[clave] || "";
+        }
+
+        function agregarFila() {
+            let tabla = document.getElementById("tabla").getElementsByTagName('tbody')[0];
+            let nuevaFila = tabla.insertRow();
+            document.querySelectorAll("#formulario input, #formulario select").forEach(input => {
+                let celda = nuevaFila.insertCell();
+                celda.textContent = input.value;
+            });
+	 document.getElementById("formulario").reset();
+        }
+
+       
+
+        function generarCSV() {
+            let filas = document.querySelectorAll("#tabla tbody tr");
+            let csvContent = "data:text/csv;charset=utf-8,nombre_destinatario,direccion_destinatario,telefono_destinatario,poblado_destino,servicio,valor_cod,cantidad_piezas,tipo_pieza,peso,referencia_1,referencia_2\n" + 
+                Array.from(filas).map(fila => {
+                    // Excluir las columnas de Departamento, Municipio y Aldea
+                    return [
+                        fila.cells[0].textContent, // nombre_destinatario
+                        fila.cells[1].textContent, // Dirección
+                        fila.cells[5].textContent, // Poblado
+                        fila.cells[6].textContent, // Teléfono
+                        fila.cells[7].textContent, // Servicio
+                        fila.cells[8].textContent, // Valor COD
+                        fila.cells[9].textContent, // Cantidad Piezas
+                        fila.cells[10].textContent, // Tipo Pieza
+                        fila.cells[11].textContent, // Peso
+                        fila.cells[12].textContent, // Referencia 1
+                        fila.cells[13].textContent  // Referencia 2
+                    ].join(",");
+                }).join("\n");
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "datos.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Borra todas las filas de la tabla
+            document.querySelector("#tabla tbody").innerHTML = '';
+
+
+
+
+        }
+    </script>
+</body>
+</html>
